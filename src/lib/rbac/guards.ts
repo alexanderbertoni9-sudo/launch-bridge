@@ -3,18 +3,18 @@ import { forbidden, redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 
-export async function requireSignedInUser() {
+export async function requireSignedInUser(redirectTo = "/auth") {
   const session = await auth();
 
   if (!session?.user) {
-    redirect("/auth");
+    redirect(redirectTo);
   }
 
   return session.user;
 }
 
-export async function requireRole(role: UserRole) {
-  const user = await requireSignedInUser();
+export async function requireRole(role: UserRole, redirectTo = "/auth") {
+  const user = await requireSignedInUser(redirectTo);
 
   if (user.role !== role) {
     forbidden();
@@ -23,12 +23,10 @@ export async function requireRole(role: UserRole) {
   return user;
 }
 
-export async function requireAdminOrStudent() {
-  const user = await requireSignedInUser();
+export async function requireStudentSession() {
+  return requireRole(UserRole.STUDENT, "/auth");
+}
 
-  if (user.role !== UserRole.ADMIN && user.role !== UserRole.STUDENT) {
-    forbidden();
-  }
-
-  return user;
+export async function requireAdminSession() {
+  return requireRole(UserRole.ADMIN, "/admin/login");
 }

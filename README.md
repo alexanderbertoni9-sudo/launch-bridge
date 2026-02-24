@@ -5,7 +5,7 @@ LaunchBridge is a hosted multi-user web product for student ventures with role-b
 ## Implemented MVP
 
 ### Student routes
-- `/auth` - student signup/login
+- `/auth` - student login (demo mode; signup disabled)
 - `/student` - dashboard for own ventures
 - `/student/ventures/new` - create venture
 - `/student/ventures/:id/canvas` - Lean Canvas editor
@@ -27,7 +27,7 @@ LaunchBridge is a hosted multi-user web product for student ventures with role-b
 - Roles: `STUDENT`, `ADMIN`
 - Student access is restricted to `ownerUserId === currentUser.id`
 - Admin can access all ventures
-- Middleware applies route gating and basic auth endpoint rate limiting
+- Middleware applies rate limiting for auth endpoints
 - Server-side guards enforce permissions on every venture read/write operation
 
 ## Data model
@@ -49,30 +49,25 @@ LaunchBridge is a hosted multi-user web product for student ventures with role-b
 3. Set `.env` values:
    - `DATABASE_URL`
    - `AUTH_SECRET`
-   - `ADMIN_SEED_EMAILS`
-   - `ADMIN_SEED_PASSWORD`
-4. Apply migrations:
+   - demo seed vars (`DEMO_ADMIN_*`, `DEMO_STUDENT_*`)
+4. Bootstrap demo environment:
    ```bash
-   npm run prisma:migrate
+   npm run demo:bootstrap
    ```
-5. Generate Prisma client:
-   ```bash
-   npm run prisma:generate
-   ```
-6. Seed admin accounts:
-   ```bash
-   npm run prisma:seed
-   ```
-7. Run app:
+5. Run app:
    ```bash
    npm run dev
    ```
 
-## Admin provisioning
-- Admin users are seeded from:
-  - `ADMIN_SEED_EMAILS` (comma-separated)
+## Demo account provisioning
+- Demo admin and student users are seeded from:
+  - `DEMO_ADMIN_EMAIL`
+  - `DEMO_ADMIN_PASSWORD`
+  - `DEMO_STUDENT_EMAIL`
+  - `DEMO_STUDENT_PASSWORD`
+- Legacy admin seeding remains supported with:
+  - `ADMIN_SEED_EMAILS`
   - `ADMIN_SEED_PASSWORD`
-- Public signup always creates `STUDENT` users.
 
 ## Tests
 - Unit + integration:
@@ -85,5 +80,6 @@ LaunchBridge is a hosted multi-user web product for student ventures with role-b
   ```
 
 ## Notes
-- Feedback generation is deterministic template-based and persisted; this is AI-ready for future replacement.
-- Middleware role hints use a secure role cookie for fast gating; authoritative authorization is still server-side via session + DB ownership checks.
+- Signup is intentionally disabled for demo reliability.
+- Feedback generation is deterministic template-based and persisted.
+- Middleware no longer relies on custom role cookies; authorization is session + server-guard driven.

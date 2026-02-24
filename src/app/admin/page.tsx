@@ -1,10 +1,10 @@
 import Link from "next/link";
 
-import { requireRole } from "@/lib/rbac/guards";
+import { requireAdminSession } from "@/lib/rbac/guards";
 import { getAllVenturesForAdmin } from "@/lib/services/venture";
 
 export default async function AdminDashboardPage() {
-  await requireRole("ADMIN");
+  await requireAdminSession();
 
   const ventures = await getAllVenturesForAdmin();
 

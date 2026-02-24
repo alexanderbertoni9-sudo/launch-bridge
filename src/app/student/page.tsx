@@ -1,10 +1,10 @@
 import Link from "next/link";
 
-import { requireRole } from "@/lib/rbac/guards";
+import { requireStudentSession } from "@/lib/rbac/guards";
 import { getStudentVentures } from "@/lib/services/venture";
 
 export default async function StudentDashboardPage() {
-  const user = await requireRole("STUDENT");
+  const user = await requireStudentSession();
   const ventures = await getStudentVentures(user.id);
 
   return (

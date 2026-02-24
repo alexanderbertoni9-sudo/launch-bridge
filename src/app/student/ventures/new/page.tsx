@@ -2,14 +2,14 @@ import Link from "next/link";
 
 import { ErrorBanner } from "@/components/error-banner";
 import { createVentureAction } from "@/lib/actions/venture-actions";
-import { requireRole } from "@/lib/rbac/guards";
+import { requireStudentSession } from "@/lib/rbac/guards";
 
 type NewVenturePageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export default async function NewVenturePage({ searchParams }: NewVenturePageProps) {
-  await requireRole("STUDENT");
+  await requireStudentSession();
   const resolvedSearchParams = (await searchParams) ?? {};
   const errorCode = typeof resolvedSearchParams.error === "string" ? resolvedSearchParams.error : undefined;
 

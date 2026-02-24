@@ -4,7 +4,7 @@ import { forbidden, notFound } from "next/navigation";
 import { ErrorBanner } from "@/components/error-banner";
 import { updateCanvasAction } from "@/lib/actions/venture-actions";
 import { PermissionDeniedError, ResourceNotFoundError } from "@/lib/rbac/errors";
-import { requireRole } from "@/lib/rbac/guards";
+import { requireStudentSession } from "@/lib/rbac/guards";
 import { getVentureForStudent } from "@/lib/services/venture";
 
 type CanvasPageProps = {
@@ -13,7 +13,7 @@ type CanvasPageProps = {
 };
 
 export default async function CanvasEditorPage({ params, searchParams }: CanvasPageProps) {
-  const user = await requireRole("STUDENT");
+  const user = await requireStudentSession();
   const { id } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
 

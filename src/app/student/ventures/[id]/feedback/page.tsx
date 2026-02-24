@@ -3,7 +3,7 @@ import { forbidden, notFound } from "next/navigation";
 
 import { requestFeedbackAction } from "@/lib/actions/venture-actions";
 import { PermissionDeniedError, ResourceNotFoundError } from "@/lib/rbac/errors";
-import { requireRole } from "@/lib/rbac/guards";
+import { requireStudentSession } from "@/lib/rbac/guards";
 import { getFeedbackHistoryForStudent, getVentureForStudent } from "@/lib/services/venture";
 
 type FeedbackPageProps = {
@@ -12,7 +12,7 @@ type FeedbackPageProps = {
 };
 
 export default async function FeedbackPage({ params, searchParams }: FeedbackPageProps) {
-  const user = await requireRole("STUDENT");
+  const user = await requireStudentSession();
   const { id } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
 

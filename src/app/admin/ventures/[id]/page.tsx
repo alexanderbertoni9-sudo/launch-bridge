@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ResourceNotFoundError } from "@/lib/rbac/errors";
-import { requireRole } from "@/lib/rbac/guards";
+import { requireAdminSession } from "@/lib/rbac/guards";
 import { getVentureDetailForAdmin } from "@/lib/services/venture";
 
 type AdminVentureDetailPageProps = {
@@ -10,7 +10,7 @@ type AdminVentureDetailPageProps = {
 };
 
 export default async function AdminVentureDetailPage({ params }: AdminVentureDetailPageProps) {
-  await requireRole("ADMIN");
+  await requireAdminSession();
   const { id } = await params;
 
   try {

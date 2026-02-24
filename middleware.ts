@@ -9,17 +9,6 @@ const rateLimitStore = new Map<string, RateLimitEntry>();
 const AUTH_WINDOW_MS = 60_000;
 const AUTH_LIMIT = 20;
 
-function hasSessionCookie(request: NextRequest) {
-  return Boolean(
-    request.cookies.get("authjs.session-token")?.value ||
-      request.cookies.get("__Secure-authjs.session-token")?.value,
-  );
-}
-
-function getRoleCookie(request: NextRequest) {
-  return request.cookies.get("lb-role")?.value;
-}
-
 function isRateLimited(request: NextRequest) {
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
   const key = `${ip}:${request.nextUrl.pathname}`;
@@ -73,44 +62,6 @@ export function middleware(request: NextRequest) {
 
   if (rateLimitResponse) {
     return rateLimitResponse;
-  }
-
-  const { pathname } = request.nextUrl;
-  const authenticated = hasSessionCookie(request);
-  const role = getRoleCookie(request);
-
-  if (pathname.startsWith("/student")) {
-    if (!authenticated) {
-      return NextResponse.redirect(new URL("/auth", request.url));
-    }
-
-    if (role && role !== "STUDENT") {
-      return NextResponse.redirect(new URL("/forbidden", request.url));
-    }
-  }
-
-  if (pathname === "/admin/login" && authenticated && role === "ADMIN") {
-    return NextResponse.redirect(new URL("/admin", request.url));
-  }
-
-  if (pathname.startsWith("/admin") && pathname !== "/admin/login") {
-    if (!authenticated) {
-      return NextResponse.redirect(new URL("/admin/login", request.url));
-    }
-
-    if (role !== "ADMIN") {
-      return NextResponse.redirect(new URL("/forbidden", request.url));
-    }
-  }
-
-  if (pathname === "/auth" && authenticated) {
-    if (role === "ADMIN") {
-      return NextResponse.redirect(new URL("/admin", request.url));
-    }
-
-    if (role === "STUDENT") {
-      return NextResponse.redirect(new URL("/student", request.url));
-    }
   }
 
   return NextResponse.next();

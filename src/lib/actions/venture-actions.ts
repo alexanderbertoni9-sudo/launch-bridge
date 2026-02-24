@@ -3,7 +3,7 @@
 import { forbidden, notFound, redirect } from "next/navigation";
 
 import { PermissionDeniedError, ResourceNotFoundError } from "@/lib/rbac/errors";
-import { requireRole } from "@/lib/rbac/guards";
+import { requireStudentSession } from "@/lib/rbac/guards";
 import {
   createVenture,
   requestFeedbackForStudent,
@@ -12,7 +12,7 @@ import {
 import { canvasSchema, createVentureSchema } from "@/lib/validation/venture";
 
 export async function createVentureAction(formData: FormData) {
-  const user = await requireRole("STUDENT");
+  const user = await requireStudentSession();
 
   const parsed = createVentureSchema.safeParse({
     title: formData.get("title"),
@@ -29,7 +29,7 @@ export async function createVentureAction(formData: FormData) {
 }
 
 export async function updateCanvasAction(formData: FormData) {
-  const user = await requireRole("STUDENT");
+  const user = await requireStudentSession();
   const ventureId = String(formData.get("ventureId") ?? "");
 
   const parsed = canvasSchema.safeParse({
@@ -70,7 +70,7 @@ export async function updateCanvasAction(formData: FormData) {
 }
 
 export async function requestFeedbackAction(formData: FormData) {
-  const user = await requireRole("STUDENT");
+  const user = await requireStudentSession();
   const ventureId = String(formData.get("ventureId") ?? "");
 
   if (!ventureId) {
