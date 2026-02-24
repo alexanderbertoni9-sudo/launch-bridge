@@ -21,8 +21,7 @@ function getRoleCookie(request: NextRequest) {
 }
 
 function isRateLimited(request: NextRequest) {
-  const ip =
-    request.ip ?? request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
   const key = `${ip}:${request.nextUrl.pathname}`;
   const now = Date.now();
   const entry = rateLimitStore.get(key);
