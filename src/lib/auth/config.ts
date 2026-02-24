@@ -1,6 +1,7 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { UserRole } from "@prisma/client";
 import type { NextAuthConfig } from "next-auth";
+import type { Adapter } from "next-auth/adapters";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 
@@ -8,7 +9,7 @@ import { prisma } from "@/lib/db/prisma";
 import { credentialsSchema } from "@/lib/validation/auth";
 
 export const authConfig: NextAuthConfig = {
-  adapter: PrismaAdapter(prisma),
+  adapter: PrismaAdapter(prisma) as Adapter,
   session: {
     strategy: "database",
   },
@@ -62,7 +63,7 @@ export const authConfig: NextAuthConfig = {
     async session({ session, user }) {
       if (session.user) {
         session.user.id = user.id;
-        session.user.role = user.role as UserRole;
+        session.user.role = (user.role as UserRole | undefined) ?? UserRole.STUDENT;
       }
 
       return session;
