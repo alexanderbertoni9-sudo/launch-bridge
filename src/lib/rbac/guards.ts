@@ -1,9 +1,10 @@
+import type { Route } from "next";
 import { UserRole } from "@prisma/client";
 import { forbidden, redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 
-export async function requireSignedInUser(redirectTo = "/auth") {
+export async function requireSignedInUser(redirectTo: Route = "/auth") {
   const session = await auth();
 
   if (!session?.user) {
@@ -13,7 +14,7 @@ export async function requireSignedInUser(redirectTo = "/auth") {
   return session.user;
 }
 
-export async function requireRole(role: UserRole, redirectTo = "/auth") {
+export async function requireRole(role: UserRole, redirectTo: Route = "/auth") {
   const user = await requireSignedInUser(redirectTo);
 
   if (user.role !== role) {
