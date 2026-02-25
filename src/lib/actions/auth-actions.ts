@@ -21,6 +21,11 @@ function buildAuthUrl(role: UserRole, error?: string): Route {
   return `/auth?${params.toString()}` as Route;
 }
 
+function buildSuccessUrl(role: UserRole): Route {
+  const params = new URLSearchParams({ role });
+  return `/auth/success?${params.toString()}` as Route;
+}
+
 function resolveRequestedRole(value: FormDataEntryValue | null): UserRole {
   return value === UserRole.ADMIN ? UserRole.ADMIN : UserRole.STUDENT;
 }
@@ -80,11 +85,7 @@ export async function loginAction(formData: FormData) {
     redirect(buildAuthUrl(role, "invalid_credentials"));
   }
 
-  if (role === UserRole.ADMIN) {
-    redirect("/admin");
-  }
-
-  redirect("/student");
+  redirect(buildSuccessUrl(role));
 }
 
 export async function adminLoginAction(formData: FormData) {
