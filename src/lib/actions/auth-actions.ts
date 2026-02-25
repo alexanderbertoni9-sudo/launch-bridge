@@ -30,6 +30,20 @@ function resolveRequestedRole(value: FormDataEntryValue | null): UserRole {
   return value === UserRole.ADMIN ? UserRole.ADMIN : UserRole.STUDENT;
 }
 
+function getDemoCredentials(role: UserRole) {
+  if (role === UserRole.ADMIN) {
+    return {
+      email: process.env.DEMO_ADMIN_EMAIL,
+      password: process.env.DEMO_ADMIN_PASSWORD,
+    };
+  }
+
+  return {
+    email: process.env.DEMO_STUDENT_EMAIL,
+    password: process.env.DEMO_STUDENT_PASSWORD,
+  };
+}
+
 export async function signupStudentAction(formData: FormData) {
   const parsed = signupSchema.safeParse({
     email: formData.get("email"),
@@ -91,6 +105,40 @@ export async function loginAction(formData: FormData) {
 export async function adminLoginAction(formData: FormData) {
   formData.set("expectedRole", UserRole.ADMIN);
   await loginAction(formData);
+}
+
+export async function quickDemoLoginAction(formData: FormData) {
+  const role = resolveRequestedRole(formData.get("expectedRole"));
+  const credentials = getDemoCredentials(role);
+  const email = credentials.email?.trim().toLowerCase();
+  const password = credentials.password?.trim();
+
+  if (!email || !password) {
+    redirect(buildAuthUrl(role, "demo_not_configured"));
+  }
+
+  try {
+    await login(email, password, role);
+  } catch (error) {
+    if (error instanceof AuthRoleError || error instanceof AuthInvalidCredentialsError) {
+      redirect(buildAuthUrl(role, "demo_seed_mismatch"));
+    }
+
+    throw error;
+  }
+
+  const result = await signIn("credentials", {
+    email,
+    password,
+    expectedRole: role,
+    redirect: false,
+  });
+
+  if (result?.error) {
+    redirect(buildAuthUrl(role, "demo_seed_mismatch"));
+  }
+
+  redirect(buildSuccessUrl(role));
 }
 
 export async function logoutAction() {

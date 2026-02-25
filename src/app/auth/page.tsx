@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { ErrorBanner } from "@/components/error-banner";
-import { loginAction } from "@/lib/actions/auth-actions";
+import { loginAction, quickDemoLoginAction } from "@/lib/actions/auth-actions";
 
 type AuthPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -49,6 +49,27 @@ export default async function AuthPage({ searchParams }: AuthPageProps) {
           <p className="muted">
             Use your seeded demo account. Admin alias still available at <Link href="/admin/login">/admin/login</Link>.
           </p>
+
+          <section className="stack">
+            <h2>Quick Demo Access</h2>
+            <p className="muted">
+              If manual login fails, use one-click demo sign-in to verify dashboard flow instantly.
+            </p>
+            <div className="row">
+              <form action={quickDemoLoginAction}>
+                <input name="expectedRole" type="hidden" value="STUDENT" />
+                <button type="submit" className="button ghost">
+                  Enter Student Dashboard
+                </button>
+              </form>
+              <form action={quickDemoLoginAction}>
+                <input name="expectedRole" type="hidden" value="ADMIN" />
+                <button type="submit" className="button secondary">
+                  Enter Admin Dashboard
+                </button>
+              </form>
+            </div>
+          </section>
         </article>
 
         {debugPreviewEnabled ? (

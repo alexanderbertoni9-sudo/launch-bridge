@@ -83,6 +83,8 @@ LaunchBridge is a hosted multi-user web product for student ventures with role-b
   - select `Student` + valid student credentials -> redirect to `/student`
   - select `Admin` + valid admin credentials -> redirect to `/admin`
 - Wrong role selection returns an inline role mismatch message.
+- `GET /` includes one-click demo login buttons for student/admin to immediately verify dashboard access.
+- If manual login fails, use quick demo login buttons; if they fail, the app will show whether demo env vars are missing or seed is out of sync.
 
 ## Tests
 - Unit + integration:
