@@ -9,6 +9,7 @@ import {
   AuthInvalidCredentialsError,
   AuthRoleError,
   login,
+  upsertUserCredentials,
 } from "@/lib/services/auth";
 import { credentialsSchema, signupSchema } from "@/lib/validation/auth";
 
@@ -117,14 +118,34 @@ export async function quickDemoLoginAction(formData: FormData) {
     redirect(buildAuthUrl(role, "demo_not_configured"));
   }
 
+  const parsed = credentialsSchema.safeParse({
+    email,
+    password,
+    expectedRole: role,
+  });
+
+  if (!parsed.success) {
+    redirect(buildAuthUrl(role, "demo_not_configured"));
+  }
+
+  let needsSync = false;
+
   try {
     await login(email, password, role);
   } catch (error) {
     if (error instanceof AuthRoleError || error instanceof AuthInvalidCredentialsError) {
-      redirect(buildAuthUrl(role, "demo_seed_mismatch"));
+      needsSync = true;
+    } else {
+      throw error;
     }
+  }
 
-    throw error;
+  if (needsSync) {
+    try {
+      await upsertUserCredentials(email, password, role);
+    } catch {
+      redirect(buildAuthUrl(role, "demo_sync_failed"));
+    }
   }
 
   const result = await signIn("credentials", {
@@ -135,7 +156,7 @@ export async function quickDemoLoginAction(formData: FormData) {
   });
 
   if (result?.error) {
-    redirect(buildAuthUrl(role, "demo_seed_mismatch"));
+    redirect(buildAuthUrl(role, "demo_sync_failed"));
   }
 
   redirect(buildSuccessUrl(role));

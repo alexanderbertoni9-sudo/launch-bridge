@@ -24,6 +24,29 @@ export class AuthRoleError extends Error {
   }
 }
 
+export async function upsertUserCredentials(email: string, password: string, role: UserRole) {
+  const normalizedEmail = email.toLowerCase();
+  const passwordHash = await bcrypt.hash(password, 12);
+
+  return prisma.user.upsert({
+    where: { email: normalizedEmail },
+    update: {
+      role,
+      passwordHash,
+    },
+    create: {
+      email: normalizedEmail,
+      role,
+      passwordHash,
+    },
+    select: {
+      id: true,
+      email: true,
+      role: true,
+    },
+  });
+}
+
 export async function signupStudent(email: string, password: string) {
   const normalizedEmail = email.toLowerCase();
 

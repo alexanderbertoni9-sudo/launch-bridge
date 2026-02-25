@@ -11,6 +11,8 @@ const MESSAGES: Record<string, string> = {
   demo_not_configured: "Demo credentials are not configured in environment variables yet.",
   demo_seed_mismatch:
     "Demo credentials do not match database records. Re-run prisma seed with DEMO_* values.",
+  demo_sync_failed:
+    "Could not auto-sync demo account from environment values. Check DATABASE_URL and DEMO_* vars.",
   admin_only: "This login is restricted to admin accounts.",
   role_mismatch: "This account does not match the selected role. Switch role and try again.",
   invalid_input: "Please correct the highlighted fields and try again.",
