@@ -3,17 +3,48 @@ const { PrismaClient, UserRole } = require("@prisma/client");
 
 const prisma = new PrismaClient();
 
+function stripWrappingQuotes(rawValue) {
+  const value = (rawValue || "").trim();
+  if (!value) {
+    return "";
+  }
+
+  const startsWithQuote = value.startsWith('"') || value.startsWith("'");
+  const endsWithQuote = value.endsWith('"') || value.endsWith("'");
+  if (startsWithQuote && endsWithQuote && value.length >= 2) {
+    return value.slice(1, -1).trim();
+  }
+
+  return value;
+}
+
+function normalizeEmail(rawValue) {
+  return stripWrappingQuotes(rawValue).toLowerCase();
+}
+
+function normalizePassword(rawValue) {
+  return stripWrappingQuotes(rawValue);
+}
+
 function parseEmailList(raw) {
   return (raw || "")
     .split(",")
-    .map((item) => item.trim().toLowerCase())
+    .map((item) => normalizeEmail(item))
     .filter(Boolean);
 }
 
-async function upsertUser(email, password, role) {
+function assertStrongPassword(password, label) {
+  if (password.length < 8) {
+    throw new Error(`${label} must be at least 8 characters.`);
+  }
+}
+
+async function upsertUser(email, password, role, label) {
   if (!email || !password) {
     return false;
   }
+
+  assertStrongPassword(password, label);
 
   const passwordHash = await bcrypt.hash(password, 12);
 
@@ -35,7 +66,7 @@ async function upsertUser(email, password, role) {
 
 async function seedLegacyAdminList() {
   const emails = parseEmailList(process.env.ADMIN_SEED_EMAILS);
-  const password = process.env.ADMIN_SEED_PASSWORD;
+  const password = normalizePassword(process.env.ADMIN_SEED_PASSWORD);
 
   if (!emails.length || !password) {
     return 0;
@@ -43,7 +74,7 @@ async function seedLegacyAdminList() {
 
   let count = 0;
   for (const email of emails) {
-    const seeded = await upsertUser(email, password, UserRole.ADMIN);
+    const seeded = await upsertUser(email, password, UserRole.ADMIN, "ADMIN_SEED_PASSWORD");
     if (seeded) {
       count += 1;
     }
@@ -53,19 +84,33 @@ async function seedLegacyAdminList() {
 }
 
 async function seedDemoAccounts() {
-  const demoAdminEmail = (process.env.DEMO_ADMIN_EMAIL || "").trim().toLowerCase();
-  const demoAdminPassword = process.env.DEMO_ADMIN_PASSWORD;
+  const demoAdminEmail = normalizeEmail(process.env.DEMO_ADMIN_EMAIL);
+  const demoAdminPassword = normalizePassword(process.env.DEMO_ADMIN_PASSWORD);
 
-  const demoStudentEmail = (process.env.DEMO_STUDENT_EMAIL || "").trim().toLowerCase();
-  const demoStudentPassword = process.env.DEMO_STUDENT_PASSWORD;
+  const demoStudentEmail = normalizeEmail(process.env.DEMO_STUDENT_EMAIL);
+  const demoStudentPassword = normalizePassword(process.env.DEMO_STUDENT_PASSWORD);
 
   let count = 0;
 
-  if (await upsertUser(demoAdminEmail, demoAdminPassword, UserRole.ADMIN)) {
+  if (
+    await upsertUser(
+      demoAdminEmail,
+      demoAdminPassword,
+      UserRole.ADMIN,
+      "DEMO_ADMIN_PASSWORD",
+    )
+  ) {
     count += 1;
   }
 
-  if (await upsertUser(demoStudentEmail, demoStudentPassword, UserRole.STUDENT)) {
+  if (
+    await upsertUser(
+      demoStudentEmail,
+      demoStudentPassword,
+      UserRole.STUDENT,
+      "DEMO_STUDENT_PASSWORD",
+    )
+  ) {
     count += 1;
   }
 

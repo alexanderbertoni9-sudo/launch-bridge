@@ -2,23 +2,26 @@ import { expect, test } from "@playwright/test";
 
 const adminEmail = process.env.E2E_ADMIN_EMAIL;
 const adminPassword = process.env.E2E_ADMIN_PASSWORD;
+const studentEmail = process.env.E2E_STUDENT_EMAIL;
+const studentPassword = process.env.E2E_STUDENT_PASSWORD;
 
 test.describe("student and admin venture flow", () => {
-  test.skip(!adminEmail || !adminPassword, "E2E admin credentials are required.");
+  test.skip(
+    !adminEmail || !adminPassword || !studentEmail || !studentPassword,
+    "E2E admin and student credentials are required.",
+  );
 
   test("student can create venture, fill canvas, request feedback, and admin can read it", async ({
     page,
     browser,
   }) => {
     const unique = Date.now();
-    const studentEmail = `student-${unique}@example.com`;
-    const studentPassword = "Password123!";
 
-    await page.goto("/auth?mode=signup");
-    await page.getByLabel("Email").fill(studentEmail);
-    await page.getByLabel("Password").fill(studentPassword);
-    await page.getByLabel("Confirm Password").fill(studentPassword);
-    await page.getByRole("button", { name: "Create Student Account" }).click();
+    await page.goto("/auth");
+    await page.getByLabel("Role").selectOption("STUDENT");
+    await page.getByLabel("Email").fill(studentEmail as string);
+    await page.getByLabel("Password").fill(studentPassword as string);
+    await page.getByRole("button", { name: "Login" }).click();
 
     await expect(page).toHaveURL(/\/student/);
     await page.getByRole("link", { name: "New Venture" }).click();
@@ -40,10 +43,11 @@ test.describe("student and admin venture flow", () => {
     const adminContext = await browser.newContext();
     const adminPage = await adminContext.newPage();
 
-    await adminPage.goto("/admin/login");
-    await adminPage.getByLabel("Admin Email").fill(adminEmail as string);
+    await adminPage.goto("/auth?role=ADMIN");
+    await adminPage.getByLabel("Role").selectOption("ADMIN");
+    await adminPage.getByLabel("Email").fill(adminEmail as string);
     await adminPage.getByLabel("Password").fill(adminPassword as string);
-    await adminPage.getByRole("button", { name: "Login as Admin" }).click();
+    await adminPage.getByRole("button", { name: "Login" }).click();
 
     await expect(adminPage).toHaveURL(/\/admin/);
     await adminPage.getByRole("link", { name: "Open" }).first().click();

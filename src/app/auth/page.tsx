@@ -10,21 +10,31 @@ type AuthPageProps = {
 export default async function AuthPage({ searchParams }: AuthPageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
   const errorCode = typeof resolvedSearchParams.error === "string" ? resolvedSearchParams.error : undefined;
+  const roleParam = typeof resolvedSearchParams.role === "string" ? resolvedSearchParams.role.toUpperCase() : "";
+  const selectedRole = roleParam === "ADMIN" ? "ADMIN" : "STUDENT";
+  const debugPreviewEnabled = process.env.ENABLE_DEBUG_DASHBOARD_PREVIEW === "true";
 
   return (
     <main>
-      <section className="grid two">
+      <section className="stack" style={{ maxWidth: 560, margin: "0 auto" }}>
         <article className="card stack">
           <div className="stack">
-            <h1>Student Access</h1>
+            <h1>LaunchBridge Login</h1>
             <p className="muted">Demo mode is active. Login is available; signup is temporarily disabled.</p>
           </div>
 
           <ErrorBanner code={errorCode} />
 
-          <p className="badge">Login</p>
+          <p className="badge">{selectedRole === "ADMIN" ? "Admin Login" : "Student Login"}</p>
 
           <form action={loginAction}>
+            <label>
+              Role
+              <select name="expectedRole" defaultValue={selectedRole} required>
+                <option value="STUDENT">Student</option>
+                <option value="ADMIN">Admin</option>
+              </select>
+            </label>
             <label>
               Email
               <input name="email" type="email" required />
@@ -37,19 +47,26 @@ export default async function AuthPage({ searchParams }: AuthPageProps) {
           </form>
 
           <p className="muted">
-            Admin? Use <Link href="/admin/login">admin login</Link>.
+            Use your seeded demo account. Admin alias still available at <Link href="/admin/login">/admin/login</Link>.
           </p>
         </article>
 
-        <article className="card stack">
-          <h2>What you can do</h2>
-          <ul className="list muted">
-            <li>Use demo student and admin credentials to access the product.</li>
-            <li>Create and manage multiple ventures.</li>
-            <li>Fill out the full 9-block Lean Canvas.</li>
-            <li>Request and review persisted feedback history.</li>
-          </ul>
-        </article>
+        {debugPreviewEnabled ? (
+          <article className="card stack">
+            <h2>Temporary Debug Preview</h2>
+            <p className="muted">
+              Use these links to preview dashboard layouts while login is being stabilized.
+            </p>
+            <div className="row">
+              <Link href="/debug/student-dashboard-preview" className="button ghost">
+                Preview Student Dashboard
+              </Link>
+              <Link href="/debug/admin-dashboard-preview" className="button secondary">
+                Preview Admin Dashboard
+              </Link>
+            </div>
+          </article>
+        ) : null}
       </section>
     </main>
   );

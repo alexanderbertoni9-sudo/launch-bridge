@@ -1,5 +1,6 @@
 "use server";
 
+import type { Route } from "next";
 import { UserRole } from "@prisma/client";
 import { redirect } from "next/navigation";
 
@@ -10,6 +11,19 @@ import {
   login,
 } from "@/lib/services/auth";
 import { credentialsSchema, signupSchema } from "@/lib/validation/auth";
+
+function buildAuthUrl(role: UserRole, error?: string): Route {
+  const params = new URLSearchParams({ role });
+  if (error) {
+    params.set("error", error);
+  }
+
+  return `/auth?${params.toString()}` as Route;
+}
+
+function resolveRequestedRole(value: FormDataEntryValue | null): UserRole {
+  return value === UserRole.ADMIN ? UserRole.ADMIN : UserRole.STUDENT;
+}
 
 export async function signupStudentAction(formData: FormData) {
   const parsed = signupSchema.safeParse({
@@ -26,23 +40,30 @@ export async function signupStudentAction(formData: FormData) {
 }
 
 export async function loginAction(formData: FormData) {
-  const parsed = credentialsSchema.omit({ expectedRole: true }).safeParse({
+  const requestedRole = resolveRequestedRole(formData.get("expectedRole"));
+
+  const parsed = credentialsSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
+    expectedRole: requestedRole,
   });
 
   if (!parsed.success) {
-    redirect("/auth?error=invalid_credentials");
+    redirect(buildAuthUrl(requestedRole, "invalid_credentials"));
   }
 
+  const role = parsed.data.expectedRole ?? UserRole.STUDENT;
   const email = parsed.data.email.toLowerCase();
 
-  let user: { id: string; email: string; role: UserRole };
   try {
-    user = await login(email, parsed.data.password);
+    await login(email, parsed.data.password, role);
   } catch (error) {
+    if (error instanceof AuthRoleError) {
+      redirect(buildAuthUrl(role, "role_mismatch"));
+    }
+
     if (error instanceof AuthInvalidCredentialsError) {
-      redirect("/auth?error=invalid_credentials");
+      redirect(buildAuthUrl(role, "invalid_credentials"));
     }
 
     throw error;
@@ -51,14 +72,15 @@ export async function loginAction(formData: FormData) {
   const result = await signIn("credentials", {
     email,
     password: parsed.data.password,
+    expectedRole: role,
     redirect: false,
   });
 
   if (result?.error) {
-    redirect("/auth?error=invalid_credentials");
+    redirect(buildAuthUrl(role, "invalid_credentials"));
   }
 
-  if (user.role === UserRole.ADMIN) {
+  if (role === UserRole.ADMIN) {
     redirect("/admin");
   }
 
@@ -66,43 +88,8 @@ export async function loginAction(formData: FormData) {
 }
 
 export async function adminLoginAction(formData: FormData) {
-  const parsed = credentialsSchema.omit({ expectedRole: true }).safeParse({
-    email: formData.get("email"),
-    password: formData.get("password"),
-  });
-
-  if (!parsed.success) {
-    redirect("/admin/login?error=invalid_credentials");
-  }
-
-  const email = parsed.data.email.toLowerCase();
-
-  try {
-    await login(email, parsed.data.password, UserRole.ADMIN);
-  } catch (error) {
-    if (error instanceof AuthRoleError) {
-      redirect("/admin/login?error=admin_only");
-    }
-
-    if (error instanceof AuthInvalidCredentialsError) {
-      redirect("/admin/login?error=invalid_credentials");
-    }
-
-    throw error;
-  }
-
-  const result = await signIn("credentials", {
-    email,
-    password: parsed.data.password,
-    expectedRole: UserRole.ADMIN,
-    redirect: false,
-  });
-
-  if (result?.error) {
-    redirect("/admin/login?error=invalid_credentials");
-  }
-
-  redirect("/admin");
+  formData.set("expectedRole", UserRole.ADMIN);
+  await loginAction(formData);
 }
 
 export async function logoutAction() {

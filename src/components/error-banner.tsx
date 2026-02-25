@@ -9,6 +9,7 @@ const MESSAGES: Record<string, string> = {
   login_failed: "Account created, but automatic sign-in failed. Please log in.",
   invalid_credentials: "Invalid email or password.",
   admin_only: "This login is restricted to admin accounts.",
+  role_mismatch: "This account does not match the selected role. Switch role and try again.",
   invalid_input: "Please correct the highlighted fields and try again.",
 };
 

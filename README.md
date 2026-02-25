@@ -5,16 +5,20 @@ LaunchBridge is a hosted multi-user web product for student ventures with role-b
 ## Implemented MVP
 
 ### Student routes
-- `/auth` - student login (demo mode; signup disabled)
+- `/auth` - unified student/admin login (demo mode; signup disabled)
 - `/student` - dashboard for own ventures
 - `/student/ventures/new` - create venture
 - `/student/ventures/:id/canvas` - Lean Canvas editor
 - `/student/ventures/:id/feedback` - request and view feedback history
 
 ### Admin routes
-- `/admin/login` - admin login
+- `/admin/login` - alias redirect to `/auth?role=ADMIN`
 - `/admin` - list all ventures
 - `/admin/ventures/:id` - venture detail (read-only)
+
+### Temporary debug routes
+- `/debug/student-dashboard-preview` - mock student dashboard preview (env-gated)
+- `/debug/admin-dashboard-preview` - mock admin dashboard preview (env-gated)
 
 ## Tech stack
 - Next.js App Router + TypeScript
@@ -49,7 +53,11 @@ LaunchBridge is a hosted multi-user web product for student ventures with role-b
 3. Set `.env` values:
    - `DATABASE_URL`
    - `AUTH_SECRET`
-   - demo seed vars (`DEMO_ADMIN_*`, `DEMO_STUDENT_*`)
+   - `DEMO_ADMIN_EMAIL=someoneelseyt69@gmail.com`
+   - `DEMO_ADMIN_PASSWORD=ABC12345`
+   - `DEMO_STUDENT_EMAIL=someoneelseyt69+student@gmail.com`
+   - `DEMO_STUDENT_PASSWORD=Student12345`
+   - `ENABLE_DEBUG_DASHBOARD_PREVIEW=true` (temporary, optional)
 4. Bootstrap demo environment:
    ```bash
    npm run demo:bootstrap
@@ -65,9 +73,16 @@ LaunchBridge is a hosted multi-user web product for student ventures with role-b
   - `DEMO_ADMIN_PASSWORD`
   - `DEMO_STUDENT_EMAIL`
   - `DEMO_STUDENT_PASSWORD`
+- Seed script trims accidental wrapping quotes and enforces password length `>= 8`.
 - Legacy admin seeding remains supported with:
   - `ADMIN_SEED_EMAILS`
   - `ADMIN_SEED_PASSWORD`
+
+## Login expectations
+- Login is role-aware in one window at `/auth`:
+  - select `Student` + valid student credentials -> redirect to `/student`
+  - select `Admin` + valid admin credentials -> redirect to `/admin`
+- Wrong role selection returns an inline role mismatch message.
 
 ## Tests
 - Unit + integration:
@@ -76,7 +91,7 @@ LaunchBridge is a hosted multi-user web product for student ventures with role-b
   ```
 - E2E:
   ```bash
-  E2E_ADMIN_EMAIL=admin@example.com E2E_ADMIN_PASSWORD=... npm run test:e2e
+  E2E_ADMIN_EMAIL=admin@example.com E2E_ADMIN_PASSWORD=... E2E_STUDENT_EMAIL=student@example.com E2E_STUDENT_PASSWORD=... npm run test:e2e
   ```
 
 ## Notes
